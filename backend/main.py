@@ -51,21 +51,114 @@ async def upload_csv(request: Request, file: UploadFile = File(...)):
         stats["total_empty_cells"] = sum(stats["empty_cells_by_column"].values())
         
         import re
-        columns_to_check = df.columns[:19]
+        
         def summarize_row_errors(row):
             errors = []
+            
+            # Validate UPCCASE column (first column)
+            if "UPCCASE" in df.columns:
+                col = "UPCCASE"
+                val = row[col]
+                if pd.isnull(val) or str(val).strip() == "":
+                    errors.append(f"{col}: cannot be empty")
+                else:
+                    val_str = str(val).strip()
+                    if not val_str.isdigit():
+                        errors.append(f"{col}: must contain only numbers")
+                    elif len(val_str) != 11:
+                        errors.append(f"{col}: must be exactly 11 digits")
+            
+            # Validate CICID column (second column)
+            if "CICID" in df.columns:
+                col = "CICID"
+                val = row[col]
+                if pd.isnull(val) or str(val).strip() == "":
+                    errors.append(f"{col}: cannot be empty")
+                else:
+                    val_str = str(val).strip()
+                    if not val_str.isdigit():
+                        errors.append(f"{col}: must contain only numbers")
+                    elif len(val_str) != 8:
+                        errors.append(f"{col}: must be exactly 8 digits")
+            
+            # Validate Column L (Current Case Cost)
+            col_l_index = 11  # Column L is the 12th column (0-indexed)
+            if col_l_index < len(df.columns):
+                col = df.columns[col_l_index]
+                val = row[col]
+                if pd.isnull(val) or str(val).strip() == "":
+                    errors.append(f"Current Case Cost: cannot be empty")
+                else:
+                    val_str = str(val).strip()
+                    try:
+                        float(val_str)
+                    except ValueError:
+                        errors.append(f"Current Case Cost: must be a number")
+            
+            # Validate Column M (New Case Cost)
+            col_m_index = 12  # Column M is the 13th column (0-indexed)
+            if col_m_index < len(df.columns):
+                col = df.columns[col_m_index]
+                val = row[col]
+                if pd.isnull(val) or str(val).strip() == "":
+                    errors.append(f"New Case Cost: cannot be empty")
+                else:
+                    val_str = str(val).strip()
+                    try:
+                        float(val_str)
+                    except ValueError:
+                        errors.append(f"New Case Cost: must be a number")
+            
+            # Validate WareHouse name
+            if "Warehouse Name" in df.columns:
+                col = "Warehouse Name"
+                val = row[col]
+                if pd.isnull(val) or str(val).strip() == "":
+                    errors.append(f"{col}: cannot be empty")
+            
+            # Validate Division
+            if "Division" in df.columns:
+                col = "Division"
+                val = row[col]
+                if pd.isnull(val) or str(val).strip() == "":
+                    errors.append(f"{col}: cannot be empty")
+            
+            # Validate other columns as before
+            columns_to_check = [col for col in df.columns[:19] if col not in ["UPCCASE", "CICID", "Warehouse Name", "Division"]]
             for col in columns_to_check:
                 val = row[col]
                 if pd.isnull(val):
                     continue
                 if re.search(r'[A-Za-z]', str(val)):
                     errors.append(f"{col}: contains alphabets")
+                    
             return "; ".join(errors) if errors else ''
         df['ValidationErrors'] = df.apply(summarize_row_errors, axis=1)
 
         # Count rows with validation errors
         error_rows = df[df['ValidationErrors'] != '']
         stats["rows_with_errors"] = len(error_rows)
+        
+        # Add validation-specific statistics
+        stats["validation_summary"] = {
+            "total_errors": len(error_rows),
+            "error_categories": {}
+        }
+        
+        # Count occurrences of each type of error
+        if len(error_rows) > 0:
+            all_errors = []
+            for errors_str in error_rows['ValidationErrors']:
+                if errors_str:
+                    all_errors.extend(errors_str.split("; "))
+            
+            for error in all_errors:
+                if ": " in error:
+                    error_type = error.split(": ")[1]
+                    if error_type in stats["validation_summary"]["error_categories"]:
+                        stats["validation_summary"]["error_categories"][error_type] += 1
+                    else:
+                        stats["validation_summary"]["error_categories"][error_type] = 1
         
         # Save processed file with a unique name
         file_id = str(uuid.uuid4())
@@ -122,22 +215,115 @@ async def upload_file(file: UploadFile = File(...), request: Request = None):
         # Calculate total empty cells
         stats["total_empty_cells"] = sum(stats["empty_cells_by_column"].values())
         
-        # Example: Add error messages in a new column
+        # Add validation for specific columns
         import re
         def summarize_row_errors(row):
             errors = []
-            for col in df.columns:
+            
+            # Validate UPCCASE column (first column)
+            if "UPCCASE" in df.columns:
+                col = "UPCCASE"
+                val = row[col]
+                if pd.isnull(val) or str(val).strip() == "":
+                    errors.append(f"{col}: cannot be empty")
+                else:
+                    val_str = str(val).strip()
+                    if not val_str.isdigit():
+                        errors.append(f"{col}: must contain only numbers")
+                    elif len(val_str) != 11:
+                        errors.append(f"{col}: must be exactly 11 digits")
+            
+            # Validate CICID column (second column)
+            if "CICID" in df.columns:
+                col = "CICID"
+                val = row[col]
+                if pd.isnull(val) or str(val).strip() == "":
+                    errors.append(f"{col}: cannot be empty")
+                else:
+                    val_str = str(val).strip()
+                    if not val_str.isdigit():
+                        errors.append(f"{col}: must contain only numbers")
+                    elif len(val_str) != 8:
+                        errors.append(f"{col}: must be exactly 8 digits")
+            
+            # Validate Column L (Current Case Cost)
+            col_l_index = 11  # Column L is the 12th column (0-indexed)
+            if col_l_index < len(df.columns):
+                col = df.columns[col_l_index]
+                val = row[col]
+                if pd.isnull(val) or str(val).strip() == "":
+                    errors.append(f"Current Case Cost: cannot be empty")
+                else:
+                    val_str = str(val).strip()
+                    try:
+                        float(val_str)
+                    except ValueError:
+                        errors.append(f"Current Case Cost: must be a number")
+            
+            # Validate Column M (New Case Cost)
+            col_m_index = 12  # Column M is the 13th column (0-indexed)
+            if col_m_index < len(df.columns):
+                col = df.columns[col_m_index]
+                val = row[col]
+                if pd.isnull(val) or str(val).strip() == "":
+                    errors.append(f"New Case Cost: cannot be empty")
+                else:
+                    val_str = str(val).strip()
+                    try:
+                        float(val_str)
+                    except ValueError:
+                        errors.append(f"New Case Cost: must be a number")
+            
+            # Validate WareHouse name
+            if "Warehouse Name" in df.columns:
+                col = "Warehouse Name"
+                val = row[col]
+                if pd.isnull(val) or str(val).strip() == "":
+                    errors.append(f"{col}: cannot be empty")
+            
+            # Validate Division
+            if "Division" in df.columns:
+                col = "Division"
+                val = row[col]
+                if pd.isnull(val) or str(val).strip() == "":
+                    errors.append(f"{col}: cannot be empty")
+            
+            # Validate other columns as before
+            other_columns = [col for col in df.columns if col not in ["UPCCASE", "CICID", "WareHouse", "Division"]]
+            for col in other_columns:
                 val = row[col]
                 if pd.isnull(val):
                     continue
                 if re.search(r'[A-Za-z]', str(val)):
                     errors.append(f"{col}: contains alphabets")
+                    
             return "; ".join(errors) if errors else ''
         df['ValidationErrors'] = df.apply(summarize_row_errors, axis=1)
         
         # Count rows with validation errors
         error_rows = df[df['ValidationErrors'] != '']
         stats["rows_with_errors"] = len(error_rows)
+        
+        # Add validation-specific statistics
+        stats["validation_summary"] = {
+            "total_errors": len(error_rows),
+            "error_categories": {}
+        }
+        
+        # Count occurrences of each type of error
+        if len(error_rows) > 0:
+            all_errors = []
+            for errors_str in error_rows['ValidationErrors']:
+                if errors_str:
+                    all_errors.extend(errors_str.split("; "))
+            
+            for error in all_errors:
+                if ": " in error:
+                    error_type = error.split(": ")[1]
+                    if error_type in stats["validation_summary"]["error_categories"]:
+                        stats["validation_summary"]["error_categories"][error_type] += 1
+                    else:
+                        stats["validation_summary"]["error_categories"][error_type] = 1
         
         # Prepare the Excel file for download
         output = io.BytesIO()

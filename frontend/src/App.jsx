@@ -208,6 +208,33 @@ function App() {
               </div>
             </div>
           )}
+
+          {/* Validation errors summary - only show if there are validation errors */}
+          {fileStats.validation_summary &&
+            fileStats.validation_summary.total_errors > 0 && (
+              <div className='empty-cells-container validation-errors-container'>
+                <div className='empty-cells-title'>
+                  Validation Errors by Type
+                </div>
+                <div className='empty-cells-grid'>
+                  {Object.entries(fileStats.validation_summary.error_categories)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([errorType, count]) => (
+                      <div
+                        key={errorType}
+                        className='empty-cell-item validation-error-item'
+                      >
+                        <div className='empty-cell-name' title={errorType}>
+                          {errorType}
+                        </div>
+                        <div className='empty-cell-count validation-error-count'>
+                          {count}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
         </div>
       )}
     </div>

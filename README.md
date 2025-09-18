@@ -36,3 +36,5 @@
 - Open the frontend in your browser (usually http://localhost:5173)
 - Upload an Excel file
 - Download the processed file returned by the backend
+
+source .venv/bin/activate && uvicorn backend.main:app --reload

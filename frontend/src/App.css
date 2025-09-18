@@ -247,6 +247,21 @@ form {
   font-weight: 500;
 }
 
+/* Validation error styles */
+.validation-errors-container {
+  margin-top: 2rem;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1.5rem;
+}
+
+.validation-error-item {
+  border-left: 3px solid var(--danger);
+}
+
+.validation-error-count {
+  color: var(--danger);
+}
+
 h1 {
   color: var(--dark);
   margin: 0 0 1.5rem 0;
