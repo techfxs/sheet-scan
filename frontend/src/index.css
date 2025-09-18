@@ -35,11 +35,12 @@ a:hover {
 body {
   margin: 0;
   display: flex;
-  place-items: center;
+  align-items: center;
+  justify-content: center;
   min-width: 320px;
   min-height: 100vh;
   background: linear-gradient(135deg, #f0f9ff 0%, #dbeafe 100%);
-  padding: 2rem;
+  padding: 0;
 }
 
 h1 {
@@ -74,6 +75,16 @@ button:focus,
 button:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
+}
+
+#root {
+  width: 100%;
+  max-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  box-sizing: border-box;
 }
 
 @media (prefers-color-scheme: light) {
